@@ -138,7 +138,7 @@ jobs:
         run: |
           make -e \
               TEST_TYPE=${{ inputs.ENGINE_TYPE }} \
-              URL=https://api-demo.apecloud.cn \
+              URL=${{ env.CLOUD_DEMO_API }} \
               ENV_TYPE=${{ inputs.ENV_TYPE }} \
               ORG_NAME=${{ env.ORG_NAME }} \
               ENV_NAME=${{ inputs.ENV_NAME }} \
