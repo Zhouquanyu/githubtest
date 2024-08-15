@@ -92,12 +92,12 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # - name: Checkout e2e Code
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: apecloud/e2etest
-      #     ref: ${{ inputs.e2etest-branch }}
-      #     token: ${{ env.GITHUB_TOKEN }}
+      - name: Checkout e2e Code
+        uses: actions/checkout@v4
+        with:
+          repository: apecloud/e2etest
+          ref: ${{ inputs.e2etest-branch }}
+          token: ${{ env.GITHUB_TOKEN }}
 
       - uses: azure/setup-kubectl@v3
         with:
