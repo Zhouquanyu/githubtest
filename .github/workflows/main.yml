@@ -113,6 +113,10 @@ jobs:
           echo E2E_TEST_RESULT=0 >> $GITHUB_ENV
           git config --global url."https://${{ env.GITHUB_USER }}:${{ env.GITHUB_TOKEN }}@github.com".insteadof "https://github.com"
 
+      - name: install ginkgo
+        run: |
+          go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+
       - name: Configure ACK Context ${{ inputs.CLOUD_ENV_NAME }}
         id: cloud_env
         run: |
