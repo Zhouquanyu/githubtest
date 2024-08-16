@@ -19,7 +19,7 @@ on:
       ENV_TYPE:
         description: 'env type'
         required: false
-        default: 'managed'
+        default: 'playground'
         type: choice
         options:
           - playground
@@ -27,13 +27,13 @@ on:
       ENV_INIT:
         description: 'choose test env init'
         type: boolean
-        required: false
-        default: false
+        required: true
+        default: true
       ENV_CLEAN:
         description: 'choose test env clean'
         type: boolean
-        required: false
-        default: false
+        required: true
+        default: true
       ENGINE_TYPE:
         description: 'engine type'
         required: true
