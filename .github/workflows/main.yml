@@ -19,7 +19,7 @@ on:
       ENV_TYPE:
         description: 'env type'
         required: false
-        default: 'managed'
+        default: 'playground'
         type: choice
         options:
           - playground
@@ -27,13 +27,13 @@ on:
       ENV_INIT:
         description: 'choose test env init'
         type: boolean
-        required: false
-        default: false
+        required: true
+        default: true
       ENV_CLEAN:
         description: 'choose test env clean'
         type: boolean
-        required: false
-        default: false
+        required: true
+        default: true
       ENGINE_TYPE:
         description: 'engine type'
         required: true
@@ -59,20 +59,19 @@ on:
         description: 'e2etest branch name(default:main)'
         type: string
         required: false
-        default: 'main'
+        default: 'support/test-action'
 
 
 env:
   ACK_KUBECONFIG_DEMO: ${{ secrets.ACK_KUBECONFIG_DEMO }}
-  ACK_KUBECONFIG_DEV: ${{ secrets.ACK_KUBECONFIG_DEV }}
-  GITHUB_USER: ${{ secrets.PERSONAL_ACCESS_USER }}
+  AUTH0_ID_TOKEN: ${{ secrets.AUTH0_ID_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-  CLOUD_DEMO_API: ${{ secrets.CLOUD_DEMO_API }}
   CLOUD_DEV_API: ${{ secrets.CLOUD_DEV_API }}
-  ORG_NAME: 'cloud-test'
+  ORG_NAME: 'zhouquanyu2001'
   HELM_VERSION: v3.14.4
   GO_VERSION: 1.21
   KUBECTL_VERSION: v1.28.3
+  GINKGO_VERSION: v2.13.0
 
 
 permissions:
@@ -84,8 +83,7 @@ jobs:
   cloud-e2e-test:
     name: run ${{ inputs.ENGINE_TYPE }}
     runs-on: ubuntu-latest
-    outputs:
-      test-result: ${{ steps.run_cloud_e2e_test.outputs.test_result }}
+
     steps:
       - name: Setup Go
         uses: actions/setup-go@v3
@@ -108,37 +106,27 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      - name: git config
+
+      - name: install ginkgo
         run: |
-          echo E2E_TEST_RESULT=0 >> $GITHUB_ENV
-          git config --global url."https://${{ env.GITHUB_USER }}:${{ env.GITHUB_TOKEN }}@github.com".insteadof "https://github.com"
+          go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+
+      
 
       - name: Configure ACK Context ${{ inputs.CLOUD_ENV_NAME }}
-        id: cloud_env
         run: |
           mkdir -p $HOME/.kube
           touch $HOME/.kube/config
-          CLOUD_ENV_NAME="${{ inputs.CLOUD_ENV_NAME }}"
-          echo 'CLOUD_ENV_NAME='${CLOUD_ENV_NAME} >> $GITHUB_ENV
-          echo 'cloud_env_name='${CLOUD_ENV_NAME} >> $GITHUB_OUTPUT
-          case "$CLOUD_ENV_NAME" in
-              demo)
-                  echo '${{ env.ACK_KUBECONFIG_DEMO }}' >> $HOME/.kube/config
-                  echo 'TEST_URL=${{ env.CLOUD_DEMO_API }}' >> $GITHUB_ENV
-              ;;
-              dev)
-                  echo '${{ env.ACK_KUBECONFIG_DEV }}' >> $HOME/.kube/config
-                  echo 'TEST_URL=${{ env.CLOUD_DEV_API }}' >> $GITHUB_ENV
-              ;;          
-          esac
-          echo 'KUBECONFIG=$HOME/.kube/config' >> $GITHUB_ENV
+          echo '${{ env.ACK_KUBECONFIG_DEMO }}' > $HOME/.kube/config
+          echo 'TEST_URL=${{ env.CLOUD_DEMO_API }}' >> $GITHUB_ENV
+  
 
       - name: run cloud e2e test
         id: run_cloud_e2e_test
         run: |
           make -e \
               TEST_TYPE=${{ inputs.ENGINE_TYPE }} \
-              URL=${{ env.TEST_URL }} \
+              URL=${{ env.CLOUD_DEMO_API }} \
               ENV_TYPE=${{ inputs.ENV_TYPE }} \
               ORG_NAME=${{ env.ORG_NAME }} \
               ENV_NAME=${{ inputs.ENV_NAME }} \
@@ -147,19 +135,4 @@ jobs:
               KUBECONFIG=${{ env.KUBECONFIG }} \
               test-e2e-apecloud
           echo E2E_TEST_RESULT=1 >> $GITHUB_ENV
-
-      - name: return cloud e2e test result
-        id: test_result
-        if: ${{ always() }}
-        run: |
-          if [[ "${E2E_TEST_RESULT}" == '1' ]]; then
-              echo test-result=[PASSED] >> $GITHUB_OUTPUT
-          else
-              echo test-result=[FAILED] >> $GITHUB_OUTPUT
-          fi
-          echo engine-type=${{ inputs.ENGINE_TYPE }} >> $GITHUB_OUTPUT    
-
-
-
-
 
